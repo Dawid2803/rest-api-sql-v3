@@ -1,6 +1,5 @@
 const express = require("express");
-const { route } = require("express/lib/application");
-
+const User = require('./models').User;
 const router = express.Router();
 
 //async handler for requests
@@ -17,19 +16,19 @@ const asyncHandler = (cb) => {
   
 
 // return all values for current authenticated user
+// TODO create authentication middleware
+//  change findAll to findOne once auth is implemented
 router.get('/users', asyncHandler(async (req,res) => {
 
-    res.json({
-        name: 'test current user name'
-    })
+    const user = await User.findAll();
+    res.json({ user })
 }));
 
 // create new user
 router.post('/users', asyncHandler(async (req,res) => {
+    const user = await User.create(req.body);
 
-    res.json({
-        name: 'test current user name'
-    })
+    res.status(201).json({ "message": "User successfully created" });
 }))
 
 //return a list of courses
