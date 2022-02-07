@@ -28,9 +28,8 @@ router.get('/users', asyncHandler(async (req,res) => {
 // create new user then redirect to home page
 router.post('/users', asyncHandler(async (req,res) => {
     const user = await User.create(req.body);
-    res.location("/")
-    res.status(201).
-    json({ "message": "User successfully created" });
+    res.location("/").
+    status(201);
 }))
 
 //return a list of courses
@@ -41,34 +40,41 @@ router.get('/courses', asyncHandler(async (req, res) => {
 
 //return a specific course
 router.get('/courses/:id', asyncHandler(async (req, res) => {
+    const course = await Course.findByPk(req.params.id);
 
-    res.json({
-        name: 'test specific course'
-    })
+    res.json({ course });
 }))
 
 // create a new course
 router.post('/courses', asyncHandler(async (req, res) => {
-
-    res.json({
-        name: 'test post course'
-    })
+    const course = await Course.create(req.body);
+    res.location("/").
+    status(201);
 }))
 
-// update a course
-router.post('/courses/:id', asyncHandler(async (req, res) => {
+// update a course TODO:
+router.put('/courses/:id', asyncHandler(async (req, res) => {
+    const course = await Course.findByPk(req.params.id);
+    if(course){
+        course.title = req.body.title,
+        course.description = req.body.description,
+        //course.estimatedTime = req.body.estimatedTime,
+        //course.materialsNeeded = req.body.materialsNeeded,
+        course.userId = req.body.userId
+        res.status(204).json({course});
+    }
 
-    res.json({
-        name: 'test specific course update'
-    })
+
+   
 }))
 
 // delete a course
 router.delete('/courses/:id', asyncHandler(async (req, res) => {
-
-    res.json({
-        name: ' test delete specific course'
-    })
+    //const course = await Course.findByPk(req.params.id);
+    await Course.destroy({where: {
+        "id": req.params.id
+    }});
+    res.status(204).end();
 }))
 
 module.exports = router;
