@@ -1,5 +1,6 @@
 const express = require("express");
 const User = require('./models').User;
+const Course = require('./models').Course;
 const router = express.Router();
 
 //async handler for requests
@@ -24,19 +25,18 @@ router.get('/users', asyncHandler(async (req,res) => {
     res.json({ user })
 }));
 
-// create new user
+// create new user then redirect to home page
 router.post('/users', asyncHandler(async (req,res) => {
     const user = await User.create(req.body);
-
-    res.status(201).json({ "message": "User successfully created" });
+    res.location("/")
+    res.status(201).
+    json({ "message": "User successfully created" });
 }))
 
 //return a list of courses
 router.get('/courses', asyncHandler(async (req, res) => {
-    
-    res.json({
-        name: 'test courses',
-    })
+    const courses = await Course.findAll();
+    res.json({ courses });
 }));
 
 //return a specific course
