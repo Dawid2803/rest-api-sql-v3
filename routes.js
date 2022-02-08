@@ -1,8 +1,9 @@
 const express = require("express");
-const { autheticateUser } = require("./auth_user");
+const { authenticateUser } = require("./auth_user");
 const User = require('./models').User;
 const Course = require('./models').Course;
 const router = express.Router();
+
 
 //async handler for requests
 const asyncHandler = (cb) => {
@@ -16,10 +17,25 @@ const asyncHandler = (cb) => {
     }
   };
   
+// Helper function for updating courses
+
+async function updateCourse(newCourse){
+    const courses = await Course.findAll();
+    let course = courses.find(course => course.id == newCourse.id );
+
+
+    await course.update({ 
+        title: newCourse.title,
+        description: newCourse.description,
+        userId: newCourse.userId    
+    });
+
+}
+
 
 // return all values for current authenticated user
 
-router.get('/users',autheticateUser ,asyncHandler(async (req,res) => {
+router.get('/users',authenticateUser ,asyncHandler(async (req,res) => {
     const user = req.currentUser;
 
     res.json({ user })
@@ -34,6 +50,7 @@ router.post('/users', asyncHandler(async (req,res) => {
 
 //return a list of courses
 router.get('/courses', asyncHandler(async (req, res) => {
+
     const courses = await Course.findAll();
     res.json({ courses });
 }));
@@ -46,22 +63,24 @@ router.get('/courses/:id', asyncHandler(async (req, res) => {
 }))
 
 // create a new course
-router.post('/courses', asyncHandler(async (req, res) => {
+router.post('/courses',authenticateUser ,asyncHandler(async (req, res) => {
     const course = await Course.create(req.body);
     res.location("/").
-    status(201);
+    status(201).end();
 }))
 
 // update a course TODO:
-router.put('/courses/:id', asyncHandler(async (req, res) => {
+router.put('/courses/:id',authenticateUser, asyncHandler(async (req, res) => {
     const course = await Course.findByPk(req.params.id);
     if(course){
         course.title = req.body.title,
         course.description = req.body.description,
+        course.userId = req.body.userId
+
+        await updateCourse(course)
         //course.estimatedTime = req.body.estimatedTime,
         //course.materialsNeeded = req.body.materialsNeeded,
-        course.userId = req.body.userId
-        res.status(204).json({course});
+        res.status(204).end();
     }
 
 
@@ -69,12 +88,14 @@ router.put('/courses/:id', asyncHandler(async (req, res) => {
 }))
 
 // delete a course
-router.delete('/courses/:id', asyncHandler(async (req, res) => {
+router.delete('/courses/:id',authenticateUser, asyncHandler(async (req, res) => {
     //const course = await Course.findByPk(req.params.id);
     await Course.destroy({where: {
         "id": req.params.id
     }});
     res.status(204).end();
 }))
+
+
 
 module.exports = router;
