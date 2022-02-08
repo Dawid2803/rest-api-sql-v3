@@ -1,4 +1,5 @@
 const express = require("express");
+const { autheticateUser } = require("./auth_user");
 const User = require('./models').User;
 const Course = require('./models').Course;
 const router = express.Router();
@@ -17,11 +18,10 @@ const asyncHandler = (cb) => {
   
 
 // return all values for current authenticated user
-// TODO create authentication middleware
-//  change findAll to findOne once auth is implemented
-router.get('/users', asyncHandler(async (req,res) => {
 
-    const user = await User.findAll();
+router.get('/users',autheticateUser ,asyncHandler(async (req,res) => {
+    const user = req.currentUser;
+
     res.json({ user })
 }));
 
