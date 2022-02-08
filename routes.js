@@ -3,6 +3,7 @@ const { authenticateUser } = require("./auth_user");
 const User = require('./models').User;
 const Course = require('./models').Course;
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 
 
 //async handler for requests
@@ -37,50 +38,88 @@ async function updateCourse(newCourse){
 
 router.get('/users',authenticateUser ,asyncHandler(async (req,res) => {
     const user = req.currentUser;
-
-    res.json({ user })
+    if(user){
+        res.json({ user })
+    }else{
+        res.status(400).json({"message" : "User does not exist"});
+    }
 }));
 
 // create new user then redirect to home page
 router.post('/users', asyncHandler(async (req,res) => {
-    const user = await User.create(req.body);
-    res.location("/").
-    status(201);
+
+    try {
+        req.body.password = bcrypt.hashSync(req.body.password, 10);
+        const user = await User.create(req.body);
+        res.location("/").
+        status(201).
+        end(); 
+    } catch (error) {
+        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+            const errors = error.errors.map(err => err.message);
+            res.status(400).json({ errors });   
+          } else {
+            throw error;
+          } 
+    }
 }))
 
 //return a list of courses
 router.get('/courses', asyncHandler(async (req, res) => {
-
-    const courses = await Course.findAll();
+    const courses = await Course.findAll({
+        include: [{
+            model: User,
+        }]
+    });
     res.json({ courses });
 }));
 
 //return a specific course
 router.get('/courses/:id', asyncHandler(async (req, res) => {
-    const course = await Course.findByPk(req.params.id);
-
+    const course = await Course.findByPk(req.params.id, {
+        include: [{
+            model: User,
+        }]
+    });
     res.json({ course });
 }))
 
 // create a new course
 router.post('/courses',authenticateUser ,asyncHandler(async (req, res) => {
-    const course = await Course.create(req.body);
-    res.location("/").
-    status(201).end();
+    try {
+        const course = await Course.create(req.body);
+        res.location("/").
+        status(201).end(); 
+    } catch (error) {
+        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+            const errors = error.errors.map(err => err.message);
+            res.status(400).json({ errors });   
+          } else {
+            throw error;
+          } 
+    }
+
 }))
 
-// update a course TODO:
+// update a course
 router.put('/courses/:id',authenticateUser, asyncHandler(async (req, res) => {
-    const course = await Course.findByPk(req.params.id);
-    if(course){
+    try {
+        const course = await Course.findByPk(req.params.id);
         course.title = req.body.title,
         course.description = req.body.description,
         course.userId = req.body.userId
 
         await updateCourse(course)
-        //course.estimatedTime = req.body.estimatedTime,
-        //course.materialsNeeded = req.body.materialsNeeded,
+,
         res.status(204).end();
+      
+    } catch (error) {
+        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+            const errors = error.errors.map(err => err.message);
+            res.status(400).json({ errors });   
+          } else {
+            throw error;
+          } 
     }
 
 
