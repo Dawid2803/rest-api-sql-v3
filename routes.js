@@ -49,7 +49,9 @@ router.get('/users',authenticateUser ,asyncHandler(async (req,res) => {
 router.post('/users', asyncHandler(async (req,res) => {
 
     try {
-        req.body.password = bcrypt.hashSync(req.body.password, 10);
+        if(req.body.password){
+            req.body.password = bcrypt.hashSync(req.body.password, 10);            
+        }
         const user = await User.create(req.body);
         res.location("/").
         status(201).
